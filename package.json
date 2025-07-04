@@ -1,0 +1,24 @@
+{
+  "name": "alpha-break",
+  "version": "1.0.0",
+  "description": "project for the Eth Global Cannes 2025",
+  "main": "main.js",
+ "scripts": {
+  "start": "electron ."
+},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ksenija0308/alpha-break.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ksenija0308/alpha-break/issues"
+  },
+  "homepage": "https://github.com/ksenija0308/alpha-break#readme",
+  "devDependencies": {
+    "electron": "^37.2.0"
+  }
+}
+
