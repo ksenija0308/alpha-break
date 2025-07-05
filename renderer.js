@@ -1,15 +1,15 @@
-// renderer.js – Alpha Break (Oasis‑powered)
+// renderer.js – Alpha Break (Oasis-powered & personalised)
 // --------------------------------------------------------------
-// Runs in the Electron renderer process and:
 // 1. Tracks user activity (mousemove, keydown, scroll)
-// 2. Every 2 s sends idleSeconds + typingSpeed to the confidential
-//    BreakAnalyzer contract on Oasis Sapphire Testnet.
-// 3. If the contract returns true → shows the break popup.
-// 4. Handles NFT mint UI when the user confirms the break.
+// 2. Learns the user’s own “normal” typing speed locally
+// 3. Every 2 s decides if a break popup is needed
+//    • personalised threshold  → fast local check
+//    • confidential contract   → fallback / extra privacy
+// 4. Handles NFT mint UI when the user confirms the break
 // --------------------------------------------------------------
 
 /* ───────────────────────────────────────────────────────────
-   Imports & Thirdweb client (CommonJS style)
+   Imports & Thirdweb client
 ─────────────────────────────────────────────────────────── */
 const { shell } = require("electron");
 const {
@@ -20,20 +20,40 @@ const {
 } = require("thirdweb");
 const { defineChain } = require("thirdweb/chains");
 
+/* ───────────────────────────────────────────────────────────
+   Contract setup (ABI + address)          ▲▲ changed ▲▲
+─────────────────────────────────────────────────────────── */
+const BreakAnalyzerABI = [
+  {
+    inputs: [
+      { internalType: "uint256", name: "idleSeconds", type: "uint256" },
+      { internalType: "uint256", name: "typingSpeed", type: "uint256" },
+    ],
+    name: "shouldPromptBreak",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "pure",
+    type: "function",
+  },
+];
+
+const CONTRACT_ADDRESS = "0xE7C26A71423DB1D97D3d7D39cB803e89f05D61bb"; // verified
+
 // 🔐 Thirdweb client → Oasis Sapphire Testnet (chain 23295)
 const client = createThirdwebClient({
-  // secretKey is safe to expose in desktop apps; no CORS risk.
   secretKey:
     "wvNjchV4gG8Fucd3kl_DcsZF2IA3afgzWzdsyLoiMrYAoDY0Gqo9ttvxCzGRYFZEmpzXj2ugAcsKUbPhgdS8Ag",
 });
 
 const contract = getContract({
   client,
-  chain: defineChain(23295), // Oasis Sapphire Testnet
-  address: "0x572BfD81298DFabFB5927c0C99d701a57d6b17c8", // BreakAnalyzer
+  chain: defineChain(23295),
+  address: CONTRACT_ADDRESS,
+  abi: BreakAnalyzerABI,
 });
 
-// Helper: call the confidential contract
+/* ───────────────────────────────────────────────────────────
+   Helper: call the confidential contract
+─────────────────────────────────────────────────────────── */
 async function checkWithOasis(idleSeconds, typingSpeed) {
   try {
     const tx = await prepareContractCall({
@@ -41,16 +61,25 @@ async function checkWithOasis(idleSeconds, typingSpeed) {
       method: "shouldPromptBreak",
       params: [idleSeconds, typingSpeed],
     });
-
-    // simulateTransaction = free, no wallet popup (pure fn)
     const result = await simulateTransaction({ transaction: tx });
-    console.log("🧠 Oasis result:", result);
     return result === true;
   } catch (err) {
     console.error("Oasis call failed:", err);
-    // Fallback: never nag user if privacy call fails
-    return false;
+    return false; // never nag if privacy call fails
   }
+}
+
+/* ───────────────────────────────────────────────────────────
+   Personal baseline tracker (tiny “AI”)
+─────────────────────────────────────────────────────────── */
+const DEFAULT_BASELINE = { speedAvg: 80, samples: 0 };
+let baseline =
+  JSON.parse(localStorage.getItem("ab_baseline") || "null") || DEFAULT_BASELINE;
+
+function updateBaseline(typingSpeed) {
+  baseline.samples += 1;
+  baseline.speedAvg += (typingSpeed - baseline.speedAvg) / baseline.samples;
+  localStorage.setItem("ab_baseline", JSON.stringify(baseline));
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -66,7 +95,7 @@ let currentLionNumber = null;
    DOM ready
 ─────────────────────────────────────────────────────────── */
 window.onload = () => {
-  // Button hooks
+  // Buttons
   document.getElementById("yesBtn").onclick = () => confirmBreak(true);
   document.getElementById("noBtn").onclick = () => confirmBreak(false);
   document.getElementById("mintBtn").onclick = () => mintLion();
@@ -83,18 +112,31 @@ window.onload = () => {
     popupShown = false;
   });
 
-  // Periodic behaviour check (start after 10 s)
+  // Periodic behaviour check (start after 10 s)
   setTimeout(() => {
     setInterval(async () => {
       const now = Date.now();
       const idleMs = now - lastActivity;
       const scrollIdleMs = now - lastScroll;
-      const typingSpeed = speedWindow.filter((ts) => ts > now - 60000).length; // keystrokes/min
 
-      // Convert to seconds for contract
+      const typingSpeed = speedWindow.filter(
+        (ts) => ts > now - 60_000,
+      ).length; // keystrokes/min
+      updateBaseline(typingSpeed); // 🧠 learn!
+
       const idleSeconds = Math.floor(Math.max(idleMs, scrollIdleMs) / 1000);
 
-      const shouldPopup = await checkWithOasis(idleSeconds, typingSpeed);
+      /* --------  personalised trigger  -------- */
+      const speedThreshold = baseline.speedAvg * 0.7; // 70 % of personal avg
+      const localTrigger =
+        (idleMs > 20_000 && scrollIdleMs > 20_000) ||
+        typingSpeed < speedThreshold;
+
+      /* --------  confidential contract fallback -------- */
+      let shouldPopup = localTrigger;
+      if (!localTrigger) {
+        shouldPopup = await checkWithOasis(idleSeconds, typingSpeed);
+      }
 
       if (shouldPopup && !popupShown) {
         document.getElementById("popup").style.display = "block";
@@ -103,7 +145,7 @@ window.onload = () => {
         ipcRenderer.send("bring-to-front");
       }
     }, 2000);
-  }, 10000);
+  }, 10_000);
 };
 
 function updateActivity() {
@@ -121,7 +163,8 @@ function confirmBreak(didTakeBreak) {
     document.getElementById("rewardImage").src = imagePath;
     document.getElementById("rewardImage").style.display = "block";
     document.getElementById("mintButtons").style.display = "block";
-    document.getElementById("popupText").textContent = "This is your Alpha Lion 🦁";
+    document.getElementById("popupText").textContent =
+      "This is your Alpha Lion 🦁";
     document.getElementById("yesBtn").style.display = "none";
     document.getElementById("noBtn").style.display = "none";
   } else {
