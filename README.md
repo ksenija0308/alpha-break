@@ -1,130 +1,97 @@
-# 🧘‍♀️ Alpha Break – Your Pragmatic Productivity Partner
+### 🧘‍♀️ Alpha Break – Your Pragmatic Productivity Partner  
+Alpha Break is a personalised AI-powered desktop dApp that helps you take smart breaks — just like a lion 🦁.  
 
-**Alpha Break** is a consumer dApp that helps you take smart breaks — just like a lion 🦁.
+---
 
-### 🧠 What it does
+### 🧠 What It Does  
+- Monitors your typing speed and screen activity (mouse, scroll, keyboard)  
+- Learns your personal productivity rhythm over time  
+- When you're slowing down or zoning out, it gently prompts a break  
+- If you confirm taking one, it rewards you with a random Alpha Lion NFT  
+- All with privacy-first logic, using a confidential smart contract on **Oasis Sapphire**  
 
-- Monitors user typing speed and screen activity (mouse movement, scroll)
-- When signs of inactivity or slowed productivity appear, it gently nudges the user with a pop-up
-- If the user confirms taking a break, they're rewarded with a randomly selected **Alpha Lion NFT image** (minting feature coming soon)
+🔗 [Smart contract on Sourcify (verified)](https://repo.sourcify.dev/23295/0xE7C26A71423DB1D97D3d7D39cB803e89f05D61bb)
 
-### 📈 Why it matters
+---
 
-Scientific studies consistently show that:
+### 💡 Why It Matters  
+Smart people don’t wait until total exhaustion to rest. They pause strategically — when energy drops into the *orange zone* — because pushing beyond that leads to bad decisions, wasted time, and eventual burnout.  
 
-- Regular breaks enhance productivity
-- Burnout is best prevented *before* exhaustion sets in (think: rest at "battery orange," not "battery red")
-- Smart work, not long hours, delivers better outcomes
+**Alpha Break is here to end toxic productivity culture.**  
+It doesn’t nag you every 20 minutes like Pomodoro timers. It nudges you *only when your own behavior shows you're slipping*.  
 
-Alpha Break combats toxic productivity culture by rewarding *strategic* rest. Unlike rigid Pomodoro timers, it adapts break prompts to your energy flow — not every 20 minutes, but whenever your activity patterns signal the need.
+⚡ It’s ultra-personalised.  
+🛡️ It’s privacy-first.  
+🎯 It’s designed to help you get more done — by knowing when to stop.  
 
-### 📆 Built at ETHGlobal Cannes 2025
+---
 
-This app is being built as part of the ETHGlobal hackathon with:
+### 🛠️ Built With  
+- **Electron** – for the desktop app shell (Windows/macOS/Linux)  
+- **Thirdweb** – to interact with smart contracts (including NFT minting)  
+- **Oasis Sapphire Testnet** – for private, confidential logic in the smart contract  
+- **Hardhat** – to write, compile, and deploy the Solidity contract  
+- **Sourcify** – to verify and publish the smart contract  
+- **JavaScript** – logic, local AI-ish heuristics  
+- **HTML/CSS** – frontend popup UI  
+- **Node.js** – backend scripting
 
-- [Electron](https://www.electronjs.org/) for a cross-platform desktop interface
-- Rule-based AI-inspired heuristics to detect fatigue (custom logic based on user behavior)
-- Randomized lion images as reward placeholders (from local `assets/lions` folder)
-- Future integrations: NFT minting, Privy embedded wallets, Oasis confidential computing
+---
 
-### 📁 Folder structure
+### 🛸 Features In Action  
+- 📉 Tracks slow typing, long idle gaps, low scroll activity  
+- 🧠 Learns your baseline productivity over time  
+- 🔐 Falls back to smart contract if local conditions are unclear  
+- 💬 Shows a polite popup asking if you’ve taken a break  
+- 🖼️ Rewards your rest with an Alpha Lion image  
+- 🪙 Opens mint page for NFT claim  
+- 🔇 All data stays local unless you explicitly mint  
 
+---
+
+### 📂 Folder Structure  
 ```
 alpha-break/
 ├── assets/
 │   └── lions/           # Lion reward images
-├── index.html           # Frontend UI
-├── main.js              # Electron backend logic
-├── package.json         # App config and scripts
+├── index.html           # Frontend popup
+├── main.js              # Electron main process
+├── renderer.js          # Client-side logic (behavior, AI, Oasis call)
+├── mint.html            # NFT minting trigger
+├── smart-contract/      # Solidity + Hardhat config
 └── README.md            # You're reading it!
 ```
 
-### 🔮 How to run locally
+---
 
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/ksenija0308/alpha-break.git
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the app:
-   ```bash
-   npm start
-   ```
+### 🚀 How to Run Locally  
+```bash
+git clone https://github.com/ksenija0308/alpha-break.git
+cd alpha-break
+npm install
+npm start
+```
 
-### 🌱 What's next
+Then in a second terminal window (for mint page):  
+```bash
+npx serve
+```
 
-- 💰 Mint real NFTs on Ethereum-compatible testnets
-- 🔐 Add login and wallet connection via [Privy](https://docs.privy.io)
-- 🔒 Integrate confidential data handling via [Oasis Sapphire](https://docs.oasis.io/build/sapphire/)
-- 🎥 Create a demo video (< 3 mins) for ETHGlobal submission
+Visit: `http://localhost:3000/mint.html`
 
 ---
 
-Built by **Ksenija** (a non-dev!) + ChatGPT 💖 For ETHGlobal Cannes 2025 ✨
+### 🔮 What’s Next  
+- 💰 Enable real NFT minting on testnets (Base Sepolia live!)  
+- 🔐 Add embedded wallet login with Privy  
+- 🔒 Use **Oasis Sapphire confidential computing** to improve behavioral logic  
+- 🎥 Submit < 3 min demo to ETHGlobal Cannes  
+- 🧑‍💻 Show off how non-devs + AI can still ship amazing dApps  
 
-const { app, BrowserWindow, ipcMain } = require('electron');
-const { ThirdwebSDK } = require('@thirdweb-dev/sdk');
-const { ethers } = require('ethers');
+---
 
-let win;
-let sdk;
-let contract;
-
-async function initializeThirdweb() {
-// Set up a dummy signer (for testnet / read-only)
-const provider = new ethers.providers.JsonRpcProvider("https://sepolia.base.org");
-sdk = new ThirdwebSDK(provider, {
-clientId: "5d8e28e9e3b331b914b54be503698686",
-});
-
-const contractAddress = "0xF8A8D39A72A00Ccf44790843C053a6fd94Bf56a5";
-contract = await sdk.getContract(contractAddress, "nft-drop");
-
-console.log("✅ Thirdweb SDK ready");
-}
-
-function createWindow() {
-win = new BrowserWindow({
-width: 800,
-height: 600,
-webPreferences: {
-nodeIntegration: true,
-contextIsolation: false,
-}
-});
-
-win.loadFile('index.html');
-win.webContents.openDevTools();
-}
-
-app.whenReady().then(async () => {
-await initializeThirdweb();
-createWindow();
-});
-
-ipcMain.on('bring-to-front', () => {
-if (win) {
-win.show();
-win.setAlwaysOnTop(true);
-win.focus();
-setTimeout(() => {
-win.setAlwaysOnTop(false);
-}, 3000);
-}
-});
-
-ipcMain.handle("mint-lion", async (event, lionNumber) => {
-try {
-const tx = await contract.claim(1);
-console.log("Mint successful:", tx);
-return { success: true, tx };
-} catch (err) {
-console.error("Minting failed:", err);
-return { success: false, error: err.message };
-}
-});
+### 🙌 Built with Love  
+Made by **Ksenija** (a non-dev building during ETHGlobal Cannes 🏖️) + **ChatGPT**  
+Powered by good UX, privacy-preserving smart contracts, and the belief that **rest is productive**.  
 
 
