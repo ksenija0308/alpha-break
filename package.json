@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "project for the Eth Global Cannes 2025",
   "main": "main.js",
- "scripts": {
-  "start": "electron ."
-},
+  "scripts": {
+    "start": "electron ."
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ksenija0308/alpha-break.git"
@@ -19,6 +19,10 @@
   "homepage": "https://github.com/ksenija0308/alpha-break#readme",
   "devDependencies": {
     "electron": "^37.2.0"
+  },
+  "dependencies": {
+    "@privy-io/privy-browser": "^0.0.3",
+    "@thirdweb-dev/sdk": "^4.0.99",
+    "ethers": "^5.8.0"
   }
 }
-

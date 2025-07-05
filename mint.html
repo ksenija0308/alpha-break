@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mint Your Alpha Lion</title>
+    <script src="https://cdn.jsdelivr.net/npm/@thirdweb-dev/sdk/dist/browser.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        margin-top: 100px;
+      }
+      button {
+        padding: 12px 24px;
+        font-size: 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        background-color: #f90;
+        color: white;
+        border: none;
+      }
+      img {
+        margin-top: 20px;
+        max-width: 300px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Your Alpha Lion 🦁</h1>
+    <img id="lionImage" src="" alt="Your Lion" />
+    <br /><br />
+    <button onclick="mint()">Mint this NFT</button>
+
+    <script>
+      // Pick a random lion image (1 to 20)
+      const randomLion = Math.floor(Math.random() * 20) + 1;
+      const lionPath = `assets/lions/lion${randomLion}.jpg`;
+      document.getElementById("lionImage").src = lionPath;
+
+      // Call mint function
+      async function mint() {
+        try {
+          if (!window.ethereum) {
+            alert("Please install MetaMask or another wallet.");
+            return;
+          }
+
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          const signer = provider.getSigner();
+
+          const sdk = new window.ThirdwebSDK.ThirdwebSDK(signer);
+          const contract = await sdk.getContract(
+            "0xF8A8D39A72A00Ccf44790843C053a6fd94Bf56a5", // Your contract address
+            "nft-drop"
+          );
+
+          const tx = await contract.claim(1);
+          alert("✅ NFT minted! Tx: " + tx.receipt.transactionHash);
+        } catch (err) {
+          console.error(err);
+          alert("❌ Mint failed: " + err.message);
+        }
+      }
+    </script>
+  </body>
+</html>

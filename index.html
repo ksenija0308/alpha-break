@@ -33,123 +33,24 @@
       }
     </style>
   </head>
+
   <body>
     <h1>Alpha Break 🧘‍♀️</h1>
     <p>Start typing or using the app...</p>
 
     <div id="popup">
       <h2 id="popupText">Take a break, my dear 💖</h2>
-      <button id="yesBtn" onclick="confirmBreak(true)">Yes</button>
-      <button id="noBtn" onclick="confirmBreak(false)">No</button>
-      <img id="rewardImage" src="" style="display:none; max-width: 300px; margin-top: 20px;" />
-      <div id="mintButtons" style="display: none; margin-top: 20px;">
+      <button id="yesBtn">Yes</button>
+      <button id="noBtn">No</button>
+      <img id="rewardImage" src="" style="display:none; max-width:300px; margin-top:20px;" />
+      <div id="mintButtons" style="display:none; margin-top:20px;">
         <p>Would you like to mint this Alpha Lion NFT?</p>
-        <button onclick="mintLion()">Yes, Mint it</button>
-        <button onclick="cancelMint()">No thanks</button>
+        <button id="mintBtn">Yes, Mint it</button>
+        <button id="cancelBtn">No thanks</button>
       </div>
     </div>
 
-    <script>
-      let lastActivity;
-      let lastScroll;
-      let speedWindow = [];
-      let popupShown = false;
-
-      function calculateTypingSpeed() {
-        const now = Date.now();
-        const oneMinuteAgo = now - 60000;
-        const strokesLastMinute = speedWindow.filter(ts => ts > oneMinuteAgo).length;
-        return strokesLastMinute;
-      }
-
-      function confirmBreak(didTakeBreak) {
-        const popup = document.getElementById('popup');
-
-        if (didTakeBreak) {
-          const lionNumber = Math.floor(Math.random() * 20) + 1;
-          const imagePath = `assets/lions/lion${lionNumber}.jpg`;
-
-          const rewardImg = document.getElementById('rewardImage');
-          rewardImg.src = imagePath;
-          rewardImg.style.display = 'block';
-
-          document.getElementById('mintButtons').style.display = 'block';
-          document.getElementById('popupText').textContent = 'This is your Alpha Lion 🦁';
-          document.getElementById('yesBtn').style.display = 'none';
-          document.getElementById('noBtn').style.display = 'none';
-        } else {
-          alert('Okay, maybe later 💼');
-          closePopup();
-        }
-      }
-
-      function mintLion() {
-        alert("Lion NFT minting coming soon! 🦁🚀");
-        closePopup();
-      }
-
-      function cancelMint() {
-        alert("No worries, maybe next time! 💼");
-        closePopup();
-      }
-
-      function closePopup() {
-        document.getElementById('popup').style.display = 'none';
-        document.getElementById('rewardImage').style.display = 'none';
-        document.getElementById('mintButtons').style.display = 'none';
-        document.getElementById('popupText').textContent = 'Take a break, my dear 💖';
-        document.getElementById('yesBtn').style.display = 'inline-block';
-        document.getElementById('noBtn').style.display = 'inline-block';
-
-        popupShown = false;
-        lastActivity = Date.now();
-        lastScroll = Date.now();
-        speedWindow = [];
-      }
-
-      window.addEventListener('load', () => {
-        const now = Date.now();
-        lastActivity = now;
-        lastScroll = now;
-
-        document.addEventListener('mousemove', () => {
-          lastActivity = Date.now();
-          popupShown = false;
-        });
-
-        document.addEventListener('keydown', () => {
-          lastActivity = Date.now();
-          popupShown = false;
-          speedWindow.push(Date.now());
-        });
-
-        document.addEventListener('scroll', () => {
-          lastScroll = Date.now();
-          popupShown = false;
-        });
-
-        setTimeout(() => {
-          setInterval(() => {
-            const now = Date.now();
-            const idleTime = now - lastActivity;
-            const scrollIdle = now - lastScroll;
-            const typingSpeed = calculateTypingSpeed();
-
-            if ((idleTime > 20000 && scrollIdle > 20000) || typingSpeed < 20) {
-              if (!popupShown) {
-                document.getElementById('popup').style.display = 'block';
-                popupShown = true;
-
-                // Bring Electron window to front
-                if (typeof require !== 'undefined') {
-                  const { ipcRenderer } = require('electron');
-                  ipcRenderer.send('bring-to-front');
-                }
-              }
-            }
-          }, 2000);
-        }, 10000);
-      });
-    </script>
+    <!-- Electron Renderer Script -->
+    <script src="./renderer.js"></script>
   </body>
 </html>

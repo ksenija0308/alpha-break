@@ -1,0 +1,13 @@
+{
+  "name": "alpha-break-vite",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@privy-io/privy-browser": "^0.8.2"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
+  }
+}
