@@ -65,3 +65,66 @@ alpha-break/
 
 Built by **Ksenija** (a non-dev!) + ChatGPT 💖 For ETHGlobal Cannes 2025 ✨
 
+const { app, BrowserWindow, ipcMain } = require('electron');
+const { ThirdwebSDK } = require('@thirdweb-dev/sdk');
+const { ethers } = require('ethers');
+
+let win;
+let sdk;
+let contract;
+
+async function initializeThirdweb() {
+// Set up a dummy signer (for testnet / read-only)
+const provider = new ethers.providers.JsonRpcProvider("https://sepolia.base.org");
+sdk = new ThirdwebSDK(provider, {
+clientId: "5d8e28e9e3b331b914b54be503698686",
+});
+
+const contractAddress = "0xF8A8D39A72A00Ccf44790843C053a6fd94Bf56a5";
+contract = await sdk.getContract(contractAddress, "nft-drop");
+
+console.log("✅ Thirdweb SDK ready");
+}
+
+function createWindow() {
+win = new BrowserWindow({
+width: 800,
+height: 600,
+webPreferences: {
+nodeIntegration: true,
+contextIsolation: false,
+}
+});
+
+win.loadFile('index.html');
+win.webContents.openDevTools();
+}
+
+app.whenReady().then(async () => {
+await initializeThirdweb();
+createWindow();
+});
+
+ipcMain.on('bring-to-front', () => {
+if (win) {
+win.show();
+win.setAlwaysOnTop(true);
+win.focus();
+setTimeout(() => {
+win.setAlwaysOnTop(false);
+}, 3000);
+}
+});
+
+ipcMain.handle("mint-lion", async (event, lionNumber) => {
+try {
+const tx = await contract.claim(1);
+console.log("Mint successful:", tx);
+return { success: true, tx };
+} catch (err) {
+console.error("Minting failed:", err);
+return { success: false, error: err.message };
+}
+});
+
+
